@@ -12,10 +12,11 @@ def start():
     
     while True:
         serverSideSocket, addr = welcomeSocket.accept()
-        message = serverSideSocket.recv(1024)
+        message = serverSideSocket.recv(1024).decode("utf-8", "ignore")
+        message = alter_message(message)
         
         if len(message) != 0:
-            match = re.search(r"Host: (.+[a-z])(:\d+)?", message.decode("utf-8"))
+            match = re.search(r"Host: (.+[a-z])(:\d+)?", message)
             destinationIP = match.group(1)
             if match.group(2):
                 destinationPort = int(match.group(2)[1:])
@@ -23,28 +24,45 @@ def start():
                 destinationPort = 80
                 
             print("Port is:\t {0}\nHost is:\t{1}\nLength of hostname is:\t{2}\n\nMessage is:\n{3}"
-                      .format(destinationPort, destinationIP, len(destinationIP), message.decode("utf-8")))
+                      .format(destinationPort, destinationIP, len(destinationIP), message))
 
             clientSideSocket = socket(AF_INET, SOCK_STREAM)
             clientSideSocket.connect((destinationIP, destinationPort))
-            clientSideSocket.send(message)
+            clientSideSocket.send(message.encode("utf-8"))
+
+            responseMessage = clientSideSocket.recv(1024)
+            is_text = is_text_content(responseMessage.decode("utf-8", "ignore"))
             while True:
-                responseMessage = clientSideSocket.recv(1024).decode("utf-8", "ignore")
                 if len(responseMessage) != 0:
-                    alteredMessage = alter_message(responseMessage)
-                    serverSideSocket.send(alteredMessage.encode("utf-8"))
-                    print("Response is:\n\n{0}\n\nAltered response is:\n\n{1}\n{2}"
-                          .format(responseMessage, alteredMessage, "="*40))
+                    if is_text:
+                        alteredMessage = alter_message(responseMessage.decode("utf-8", "ignore"))
+                        serverSideSocket.send(alteredMessage.encode("utf-8"))
+                        print("Response is:\n\n{0}\n\nAltered response is:\n\n{1}\n{2}"
+                              .format(responseMessage.decode("utf-8", "ignore"), alteredMessage, "="*40))
+                    else:
+                        serverSideSocket.send(responseMessage)
+                        print("Response contains no text.\n{0}".format("="*40))
                 else:
                     serverSideSocket.close()
                     break
+                responseMessage = clientSideSocket.recv(1024)
+                
             clientSideSocket.close()
            
         
-def alter_message(msg):
-    altered_msg = re.sub("Smiley", "Trolly", msg)
-    altered_msg = re.sub("Stockholm", "Linköping", altered_msg)
-    return altered_msg
+def alter_message(strContent):
+    alteredContent = re.sub("Smiley", "Trolly", strContent)
+    alteredContent = re.sub("Stockholm", "Linköping", alteredContent)
+    
+    alteredContent = re.sub("smiley", "trolly", alteredContent)
+    alteredContent = re.sub("stockholm", "linkoping", alteredContent)
+        
+    return alteredContent
+
+def is_text_content(strContent):
+    if re.search("Content-Type: text", strContent):
+        return True
+    return False
 
 if __name__ == "__main__":
     start()
