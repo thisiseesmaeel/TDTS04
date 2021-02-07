@@ -8,7 +8,7 @@ def start():
     welcomeSocket = socket(AF_INET,SOCK_STREAM)
     welcomeSocket.bind((PROXY_NAME, PROXY_PORT))
     welcomeSocket.listen(1)
-    print('The server is ready to receive...\n{0}\n'.format("="*40))
+    print('The server is ready to receive...\n{0}'.format("="*40))
     
     while True:
         serverSideSocket, addr = welcomeSocket.accept()
@@ -22,20 +22,19 @@ def start():
             else:
                 destinationPort = 80
                 
-            print("Port is:\t {0}".format(destinationPort))
-            print("Host is:\t{}\nLength of hostname is:\t{}\nMessage is:\n{}".format(destinationIP, len(destinationIP), message.decode("utf-8")))
-            #capitalizedMessage = message.upper()
+            print("Port is:\t {0}\nHost is:\t{1}\nLength of hostname is:\t{2}\n\nMessage is:\n{3}"
+                      .format(destinationPort, destinationIP, len(destinationIP), message.decode("utf-8")))
 
             clientSideSocket = socket(AF_INET, SOCK_STREAM)
             clientSideSocket.connect((destinationIP, destinationPort))
             clientSideSocket.send(message)
-                       
             while True:
-                responseMessage = clientSideSocket.recv(1024).decode("utf-8")
+                responseMessage = clientSideSocket.recv(1024).decode("utf-8", "ignore")
                 if len(responseMessage) != 0:
                     alteredMessage = alter_message(responseMessage)
                     serverSideSocket.send(alteredMessage.encode("utf-8"))
-                    print("Response is:\n\n{0}\nAltered message is:\n\n{1}\n{2}".format(responseMessage, alteredMessage, "="*40))
+                    print("Response is:\n\n{0}\n\nAltered response is:\n\n{1}\n{2}"
+                          .format(responseMessage, alteredMessage, "="*40))
                 else:
                     serverSideSocket.close()
                     break
