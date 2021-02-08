@@ -6,6 +6,7 @@ PROXY_NAME = gethostbyname(gethostname()) # Which in my case is: "127.0.1.1"
 
 def start():
     welcomeSocket = socket(AF_INET,SOCK_STREAM)
+    welcomeSocket.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1) # Frees the port after force-stopping the proxy
     welcomeSocket.bind((PROXY_NAME, PROXY_PORT))
     welcomeSocket.listen(1)
     print('The server is ready to receive...\n{0}'.format("="*40))
