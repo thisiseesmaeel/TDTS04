@@ -23,7 +23,7 @@ def start():
             clientSideSocket.connect((destinationIP, destinationPort))
             clientSideSocket.send(message.encode("utf-8"))
 
-            responseMessage = clientSideSocket.recv(512)
+            responseMessage = clientSideSocket.recv(1024)
             is_text = is_text_content(responseMessage.decode("utf-8", "ignore")) # Checks if response content is text
             while True:
                 if len(responseMessage) != 0:
@@ -35,13 +35,13 @@ def start():
                 else:
                     serverSideSocket.close()
                     break
-                responseMessage = clientSideSocket.recv(512)
+                responseMessage = clientSideSocket.recv(1024)
                 
             clientSideSocket.close()
 
             
 def handle_client(serverSideSocket):
-    message = serverSideSocket.recv(512).decode("utf-8", "ignore")
+    message = serverSideSocket.recv(1024).decode("utf-8", "ignore")
     altered_message = alter_message(message)
     
     return altered_message

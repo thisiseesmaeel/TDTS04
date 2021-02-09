@@ -13,7 +13,7 @@ def start():
     
     while True:
         serverSideSocket, addr = welcomeSocket.accept()
-        message = serverSideSocket.recv(512).decode("utf-8", "ignore")
+        message = serverSideSocket.recv(1024).decode("utf-8", "ignore")
         message = alter_message(message)
         
         if len(message) != 0:
@@ -25,13 +25,13 @@ def start():
                 destinationPort = 80
                 
             print("Port is:\t {0}\nHost is:\t{1}\nLength of hostname is:\t{2}\n\nMessage is:\n{3}"
-                     # .format(destinationPort, destinationIP, len(destinationIP), message))
+                      .format(destinationPort, destinationIP, len(destinationIP), message))
 
             clientSideSocket = socket(AF_INET, SOCK_STREAM)
             clientSideSocket.connect((destinationIP, destinationPort))
             clientSideSocket.send(message.encode("utf-8"))
 
-            responseMessage = clientSideSocket.recv(512)
+            responseMessage = clientSideSocket.recv(1024)
             is_text = is_text_content(responseMessage.decode("utf-8", "ignore"))
             while True:
                 if len(responseMessage) != 0:
@@ -39,14 +39,14 @@ def start():
                         alteredMessage = alter_response(responseMessage.decode("utf-8", "ignore"))
                         serverSideSocket.send(alteredMessage.encode("utf-8"))
                         print("Response is:\n\n{0}\n\nAltered response is:\n\n{1}\n{2}"
-                             # .format(responseMessage.decode("utf-8", "ignore"), alteredMessage, "="*40))
+                              .format(responseMessage.decode("utf-8", "ignore"), alteredMessage, "="*40))
                     else:
                         serverSideSocket.send(responseMessage)
                         print("Response contains no text.\n{0}".format("="*40))
                 else:
                     serverSideSocket.close()
                     break
-                responseMessage = clientSideSocket.recv(512)
+                responseMessage = clientSideSocket.recv(1024)
                 
             clientSideSocket.close()
            
