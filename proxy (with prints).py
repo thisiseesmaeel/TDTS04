@@ -11,51 +11,45 @@ def start():
     welcomeSocket.listen(1)
     print('The server is ready to receive...\n{0}'.format("="*40))
     
-    while True: # Server is runing all the time
+    while True:
         serverSideSocket, addr = welcomeSocket.accept()
-        
-        message = handle_client(serverSideSocket) # handles clients request and alters it if needed
+        message = serverSideSocket.recv(512).decode("utf-8", "ignore")
+        message = alter_message(message)
         
         if len(message) != 0:
-            destinationPort, destinationIP = port_and_ip(message)
-            
+            match = re.search(r"Host: (.+[a-z])(:\d+)?", message)
+            destinationIP = match.group(1)
+            if match.group(2):
+                destinationPort = int(match.group(2)[1:])
+            else:
+                destinationPort = 80
+                
+            print("Port is:\t {0}\nHost is:\t{1}\nLength of hostname is:\t{2}\n\nMessage is:\n{3}"
+                     # .format(destinationPort, destinationIP, len(destinationIP), message))
+
             clientSideSocket = socket(AF_INET, SOCK_STREAM)
             clientSideSocket.connect((destinationIP, destinationPort))
             clientSideSocket.send(message.encode("utf-8"))
 
             responseMessage = clientSideSocket.recv(512)
-            is_text = is_text_content(responseMessage.decode("utf-8", "ignore")) # Checks if response content is text
+            is_text = is_text_content(responseMessage.decode("utf-8", "ignore"))
             while True:
                 if len(responseMessage) != 0:
-                    if is_text: # if content is text then alter it
+                    if is_text:
                         alteredMessage = alter_response(responseMessage.decode("utf-8", "ignore"))
                         serverSideSocket.send(alteredMessage.encode("utf-8"))
-                    else: # if not text (image) send in directly to the browser
+                        print("Response is:\n\n{0}\n\nAltered response is:\n\n{1}\n{2}"
+                             # .format(responseMessage.decode("utf-8", "ignore"), alteredMessage, "="*40))
+                    else:
                         serverSideSocket.send(responseMessage)
+                        print("Response contains no text.\n{0}".format("="*40))
                 else:
                     serverSideSocket.close()
                     break
                 responseMessage = clientSideSocket.recv(512)
                 
             clientSideSocket.close()
-
-            
-def handle_client(serverSideSocket):
-    message = serverSideSocket.recv(512).decode("utf-8", "ignore")
-    altered_message = alter_message(message)
-    
-    return altered_message
-
-def port_and_ip(message):
-    match = re.search(r"Host: (.+[a-z])(:\d+)?", message)
-    ip = match.group(1)
-    
-    if match.group(2): #ex: 127.0.0.2:400 which means this request should be send to port 400
-        port = int(match.group(2)[1:])
-    else: #otherwise the port for http must be used
-        port = 80
-            
-    return port, ip
+           
         
 def alter_message(strContent):
     alteredContent = re.sub("smiley", "trolly", strContent)
@@ -65,7 +59,7 @@ def alter_message(strContent):
 def alter_response(strContent):
     alteredContent = re.sub("Smiley", "Trolly", strContent)
     alteredContent = re.sub("Stockholm", "Linköping", alteredContent)
-    alteredContent = re.sub("/Linköping", "/Stockholm", alteredContent) #changes /Linköping back to /Stockholm due Linköping-image does not exist
+    alteredContent = re.sub("/Linköping", "/Stockholm", alteredContent)
    
     return alteredContent
 
@@ -73,7 +67,6 @@ def is_text_content(strContent):
     if re.search("Content-Type: text", strContent):
         return True
     return False
-
 
 if __name__ == "__main__":
     start()
