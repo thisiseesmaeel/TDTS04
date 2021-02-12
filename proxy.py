@@ -1,6 +1,7 @@
 from socket import *
 import re
 
+
 PROXY_PORT = 12000
 PROXY_NAME = gethostbyname(gethostname()) # Which in my case is: "127.0.1.1"
 
@@ -24,6 +25,7 @@ def start():
             clientSideSocket.send(message.encode("utf-8"))
 
             responseMessage = clientSideSocket.recv(1024)
+       
             is_text = is_text_content(responseMessage.decode("utf-8", "ignore")) # Checks if response content is text
             while True:
                 if len(responseMessage) != 0:
@@ -47,7 +49,7 @@ def handle_client(serverSideSocket):
     return altered_message
 
 def port_and_ip(message):
-    match = re.search(r"Host: (.+[a-z])(:\d+)?", message)
+    match = re.search(r"Host: (.+[a-z])(:\d+)?", message, re.IGNORECASE)
     ip = match.group(1)
     
     if match.group(2): #ex: 127.0.0.2:400 which means this request should be send to port 400
@@ -70,7 +72,7 @@ def alter_response(strContent):
     return alteredContent
 
 def is_text_content(strContent):
-    if re.search("Content-Type: text", strContent):
+    if re.search("Content-Type: text", strContent,  re.IGNORECASE):
         return True
     return False
 
