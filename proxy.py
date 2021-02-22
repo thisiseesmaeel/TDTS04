@@ -1,35 +1,41 @@
-from socket import *
-import re
+from socket import * #Import evrything from socket.
+import re #Import Regex
 
 
-PROXY_PORT = 12000
-PROXY_NAME = gethostbyname(gethostname()) # Which in my case is: "127.0.1.1"
+PROXY_PORT = 12000 #Set the proxy port to "12000"
+PROXY_NAME = gethostbyname(gethostname()) #Which in my case is: "127.0.1.1"
 
 def start():
-    welcomeSocket = socket(AF_INET,SOCK_STREAM)
-    welcomeSocket.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1) # Frees the port after force-stopping the proxy
+    #welcomeSocket to recive request to establish connection
+    welcomeSocket = socket(AF_INET,SOCK_STREAM)#ipv4/tcp
+    #Frees the port after force-stopping the proxy otherwise you should wait for a while
+    welcomeSocket.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1) #Frees the port after force-stopping the proxy
+    #Bind the socket and listen on it
     welcomeSocket.bind((PROXY_NAME, PROXY_PORT))
-    welcomeSocket.listen(1)
+    welcomeSocket.listen(6) #Allow 6 requests at the same time
     print('The server is ready to receive...\n{0}'.format("="*40))
     
-    while True: # Server is runing all the time
-        serverSideSocket, addr = welcomeSocket.accept()
+    while True: #The proxy is runing allways
+        # accept the request and save info about socket in "serverSideSocket"
+        serverSideSocket, addr = welcomeSocket.accept()  
+        # handles clients request and alters it if needed
+        message = handle_client(serverSideSocket)
         
-        message = handle_client(serverSideSocket) # handles clients request and alters it if needed
-        
-        if len(message) != 0:
-            destinationPort, destinationIP = port_and_ip(message)
-            
-            clientSideSocket = socket(AF_INET, SOCK_STREAM)
-            clientSideSocket.connect((destinationIP, destinationPort))
+        if len(message) != 0: #run this block if message is not empty
+            #Find port and Ip for dest of the message
+            destPort, destIP = port_and_ip(message)
+            #Create client socket and connect it to dest server then send altred message
+            clientSideSocket = socket(AF_INET, SOCK_STREAM)#ipv4/tcp
+            clientSideSocket.connect((destIP, destPort))
             clientSideSocket.send(message.encode("utf-8"))
-
+            # recive first chunk of data from the server
             responseMessage = clientSideSocket.recv(1024)
-       
-            is_text = is_text_content(responseMessage.decode("utf-8", "ignore")) # Checks if response content is text
-            while True:
+            # Checks if response content is text
+            is_text = is_text_content(responseMessage.decode("utf-8", "ignore")) 
+
+            while True: # while we can read data, we continue same process 
                 if len(responseMessage) != 0:
-                    if is_text: # if content is text then alter it
+                    if is_text: # if content is text then alter it and send it to the server
                         alteredMessage = alter_response(responseMessage.decode("utf-8", "ignore"))
                         serverSideSocket.send(alteredMessage.encode("utf-8"))
                     else: # if not text (image) send in directly to the browser
@@ -41,9 +47,11 @@ def start():
                 
             clientSideSocket.close()
 
-            
+
 def handle_client(serverSideSocket):
+    #recive 1024 bytes and decode it
     message = serverSideSocket.recv(1024).decode("utf-8", "ignore")
+    #Change smiley to trolly in case there is any occurence 
     altered_message = alter_message(message)
     
     return altered_message
@@ -72,6 +80,7 @@ def alter_response(strContent):
     return alteredContent
 
 def is_text_content(strContent):
+    #If it finds "Content-Type: text" that means the content is text, return True
     if re.search("Content-Type: text", strContent,  re.IGNORECASE):
         return True
     return False
