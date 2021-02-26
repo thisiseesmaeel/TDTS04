@@ -8,12 +8,11 @@ class RouterNode():
     sim = None
     costs = None
 
-
     # Access simulator variables with:
     # self.sim.POISONREVERSE, self.sim.NUM_NODES, etc.
 
     # --------------------------------------------------
-    def __init__(self, ID, sim, costs): # 
+    def __init__(self, ID, sim, costs):
         self.myID = ID
         self.sim = sim
         self.myGUI = GuiTextArea.GuiTextArea("  Output window for Router #" + str(ID) + "  ")
@@ -23,7 +22,9 @@ class RouterNode():
 
     # --------------------------------------------------
     def recvUpdate(self, pkt):
-        costs[pkt.sourceid] = pkt.mincost
+        pass
+
+
     # --------------------------------------------------
     def sendUpdate(self, pkt):
         self.sim.toLayer2(pkt)
@@ -33,12 +34,8 @@ class RouterNode():
     def printDistanceTable(self):
         self.myGUI.println("Current table for " + str(self.myID) +
                            "  at time " + str(self.sim.getClocktime()))
-        self.myGUI.print("hi")
 
 
     # --------------------------------------------------
     def updateLinkCost(self, dest, newcost):
         pass
-        
-if __name__ == "__main__":
-    l = []
