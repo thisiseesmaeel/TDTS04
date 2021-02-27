@@ -8,12 +8,12 @@ class RouterNode():
     sim = None
     costs = None
     nbr = []
-                            
+
     # Access simulator variables with:
     # self.sim.POISONREVERSE, self.sim.NUM_NODES, etc.
 
     # --------------------------------------------------
-    def __init__(self, ID, sim, costs):
+    def __init__(self, ID, sim, costs): # 
         self.myID = ID
         self.sim = sim
         self.myGUI = GuiTextArea.GuiTextArea("  Output window for Router #" + str(ID) + "  ")
@@ -61,12 +61,10 @@ class RouterNode():
 
         self.myGUI.println("\nDistancetable:")
         headerStr = "    dst |"
-        #self.myGUI.print("    dst |")
         for i in range(len(self.costs)):
             headerStr += " " * 5 + str(i)
         headerStr += "\n" + "-" * len(headerStr)
         self.myGUI.println(headerStr)
-#        self.myGUI.println("-" * len(headerStr))
 
         for i in self.nbr:
             self.myGUI.print(" nbr  " + str(i) + " |"+ "\n")
