@@ -17,10 +17,9 @@ class RouterNode():
         self.myID = ID
         self.sim = sim
         self.myGUI = GuiTextArea.GuiTextArea("  Output window for Router #" + str(ID) + "  ")
-
         self.costs = deepcopy(costs)
         self.nbr = []
-
+        self.myGUI.println(str(costs))
         print("Running for router {} and len(nbr) is : {}".format(self.myID, len(self.nbr)))
         for i in range(len(sim.connectcosts)):
             print (self.sim.connectcosts[i])
@@ -31,25 +30,28 @@ class RouterNode():
             if i == self.myID:
                 for j in range(len(self.sim.connectcosts)):
                     if self.sim.connectcosts[i][j] != sim.INFINITY and self.sim.connectcosts[i][j] != 0:
-                         if j not in self.nbr:
-                             self.nbr.append(j)
+                        self.nbr.append(j)
                 break
 
         for i in self.nbr:
             print(i)
-
+        
+        # Sending updates.
+        for n in self.nbr:
+            pkt = RouterPacket.RouterPacket(self.myID, n, deepcopy(self.costs))
+            print("Sending updates from router {} to router {}".format(self.myID, n))
+            self.sendUpdate(pkt)
+        
     # --------------------------------------------------
     def recvUpdate(self, pkt):
-        print("recv called from router {} and I am recving from router {}!".format(self.myID, pkt.sourceid))
+        print("recvUpdate called from router {} and I am receiving from router {}!".format(self.myID, pkt.sourceid))
         
         self.costs[pkt.sourceid] = pkt.mincost[pkt.sourceid]
+
         
-        # if pkt.sourceid not in self.nbr:
-        #     self.nbr.append(pkt.sourceid)
-        # print("my nbrs are: {}".format(self.nbr))
     # --------------------------------------------------
     def sendUpdate(self, pkt):
-        print("send called from router {}!".format(self.myID))
+        print("sendUpdate called from router {}!".format(self.myID))
         self.sim.toLayer2(pkt)
 
     # --------------------------------------------------
@@ -67,9 +69,13 @@ class RouterNode():
         self.myGUI.println(headerStr)
 
         for i in self.nbr:
-            self.myGUI.print(" nbr  " + str(i) + " |"+ "\n")
-        
+            self.myGUI.print(" nbr  " + str(i) + " |")
+            for i in range(len(self.costs)):
+                self.myGUI.print(" " * 5 + str(self.costs[i]))
+            self.myGUI.println()
 
+            
+       
     # --------------------------------------------------
     def updateLinkCost(self, dest, newcost):
         print("updateLink called from router {}".format(self.myID))
@@ -82,8 +88,12 @@ class RouterNode():
             pkt = RouterPacket.RouterPacket(self.myID, n, self.costs)
             print("Sending updates to router {}".format(n))
             self.sendUpdate(pkt)
+
+     # --------------------------------------------------
+     # def bellman_ford(self):
+     #     pass
         
-    
+        
 if __name__ == "__main__":
     pass
  
