@@ -6,7 +6,7 @@ class RouterNode():
     myID = None
     myGUI = None
     sim = None
-    costs = None # is this suppose to be distance vector or c(x,y)?
+    costs = None # We see this as distance vector for this router
 
     # Access simulator variables with:
     # self.sim.POISONREVERSE, self.sim.NUM_NODES, etc.
@@ -18,6 +18,7 @@ class RouterNode():
         self.sim = sim
         self.myGUI = GuiTextArea.GuiTextArea("  Output window for Router #" + str(ID) + "  ")
         self.costs = deepcopy(costs)
+        self.orgCosts = deepcopy(costs)
         self.neighborsCosts = {} # EX: {1:4, 2:1} c(x,y)
        # self.neighbors = []
         self.distanceVectors = {self.myID: self.costs}
@@ -43,7 +44,7 @@ class RouterNode():
         #                 self.neighbors.append(j)
         #         break
             
-        #Building distanceVectors containing my and my neighbors distance vector
+        # Building distanceVectors containing my and my neighbors distance vector
         for neighbor in self.neighborsCosts:
             self.distanceVectors[neighbor] = []
             for node in range(self.sim.NUM_NODES):
@@ -81,7 +82,7 @@ class RouterNode():
         
     # --------------------------------------------------
     def recvUpdate(self, pkt):
-        print("recvUpdate called from router {} and receiving from router {}!".format(self.myID, pkt.sourceid))
+        print("recvUpdate called from router {} from router {}!".format(self.myID, pkt.sourceid))
 
         self.distanceVectors[pkt.sourceid] = pkt.mincost
         self.calculate()
@@ -93,7 +94,7 @@ class RouterNode():
 
     # --------------------------------------------------
     def printDistanceTable(self):
-        print("PrintTable called from router {}".format(self.myID))
+        #print("PrintTable called from router {}".format(self.myID))
         self.myGUI.println("Current table for " + str(self.myID) +
                            "  at time " + str(self.sim.getClocktime()))
         
@@ -132,49 +133,81 @@ class RouterNode():
         for i in range(self.sim.NUM_NODES):
             self.myGUI.print("{:>6}".format(self.nextRouter[i]))
         self.myGUI.println()
-
-
-        # for neighbor in self.neighborsCosts:
-        #     self.myGUI.print(" nbr  " + str(neighbor) + " |")
-        #     for i in range(len(self.costs)):
-        #         self.myGUI.print(" " * 5 + str(self.costs[i]))
-        #     self.myGUI.println()
-
-            
        
     # --------------------------------------------------
     def updateLinkCost(self, dest, newcost):
-        print("updateLink called from router {}".format(self.myID))
+        # print("updateLink called from router {}".format(self.myID))
         print(dest, newcost)
-        self.costs[dest] = newcost
+
+        self.costs[dest] = self.sim.INFINITY
         print(self.costs)
+        self.neighborsCosts[dest] = newcost
 
-
-        for n in self.neighbors:
+        for n in self.neighborsCosts:
             pkt = RouterPacket.RouterPacket(self.myID, n, deepcopy(self.costs))
             print("Sending distance vector from router {} to router {}".format(self.myID, n))
             self.sendUpdate(pkt)
 
-    # --------------------------------------------------
 
+    # --------------------------------------------------
+    # Works without linkcost-change.         
+    # def calculate(self):
+    #     print("Distance vectors in router {} is.".format(self.myID))
+    #     for i in sorted(self.distanceVectors):
+    #         print( str(i) + " : " + str(self.distanceVectors[i]))
+
+    #     print("NeighborsCosts is: " , self.neighborsCosts)
+    #     changed = False
+    #     for n in range(self.sim.NUM_NODES):
+    #         mincost = self.costs[n] # 10
+    #         for neighbor in self.neighborsCosts:
+    #             if self.neighborsCosts[neighbor] + self.distanceVectors[neighbor][n] < mincost:
+    #                 changed = True
+    #                 mincost = self.neighborsCosts[neighbor] + self.distanceVectors[neighbor][n]
+    #                 self.nextRouter[n] = neighbor
+
+    #         if changed:
+    #             self.costs[n] = mincost
+
+    #     if changed:
+    #         print("Distance vector changed for router {} and now is {}.".format(self.myID, self.costs))
+    #         for n in self.neighborsCosts:
+    #             pkt = RouterPacket.RouterPacket(self.myID, n, deepcopy(self.costs))
+    #             print("Sending distance vector from router {} to router {}".format(self.myID, n))
+    #             self.sendUpdate(pkt)
+    #     else:
+    #         print("Distance vector DID NOT change for router {}.".format(self.myID))
+    # --------------------------------------------------
+    # New version. Works with linkcost-change on
     def calculate(self):
+        print("Distance vectors in router {} is.".format(self.myID))
+        for i in sorted(self.distanceVectors):
+            print( str(i) + " : " + str(self.distanceVectors[i]))
+
+        print("NeighborsCosts is: " , self.neighborsCosts)
         changed = False
         for n in range(self.sim.NUM_NODES):
-            mincost = self.costs[n] # 10
+            if n == self.myID:
+                continue
+            mincost = self.sim.INFINITY
             for neighbor in self.neighborsCosts:
                 if self.neighborsCosts[neighbor] + self.distanceVectors[neighbor][n] < mincost:
-                    changed = True
                     mincost = self.neighborsCosts[neighbor] + self.distanceVectors[neighbor][n]
                     self.nextRouter[n] = neighbor
 
-            if changed:
+            if self.costs[n] != mincost:
                 self.costs[n] = mincost
+                changed = True
 
         if changed:
+            print("Distance vector changed for router {} and now is {}.".format(self.myID, self.costs))
             for n in self.neighborsCosts:
                 pkt = RouterPacket.RouterPacket(self.myID, n, deepcopy(self.costs))
                 print("Sending distance vector from router {} to router {}".format(self.myID, n))
                 self.sendUpdate(pkt)
+        else:
+            print("Distance vector DID NOT change for router {}.".format(self.myID))
+
         
 if __name__ == "__main__":
     pass
