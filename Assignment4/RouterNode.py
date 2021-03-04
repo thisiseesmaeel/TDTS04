@@ -18,9 +18,10 @@ class RouterNode():
         self.sim = sim
         self.myGUI = GuiTextArea.GuiTextArea("  Output window for Router #" + str(ID) + "  ")
         self.costs = deepcopy(costs)
-        self.neighborsCosts = {}
+        self.neighborsCosts = {} # EX: {1:4, 2:1} c(x,y)
        # self.neighbors = []
         self.distanceVectors = {self.myID: self.costs}
+        self.nextRouter = {}
         self.routingTable = []
         
         print("Costs is:" , self.costs)
@@ -63,7 +64,14 @@ class RouterNode():
             
         # print("This is routingTable for router {}".format(self.myID))
         # print(self.routingTable)
-    
+        
+        for i in range(self.sim.NUM_NODES):
+            if i in self.neighborsCosts and i != self.myID:
+                #print("{} Finns i {}.".format(i, self.neighborsCosts))
+                self.nextRouter[i] = i
+            else:
+                self.nextRouter[i] = '-'
+                
 
         # Sending updates.
         for n in self.neighborsCosts:
@@ -73,7 +81,6 @@ class RouterNode():
         
     # --------------------------------------------------
     def recvUpdate(self, pkt):
-        # Vad ska vi göra här?
         print("recvUpdate called from router {} and receiving from router {}!".format(self.myID, pkt.sourceid))
 
         self.distanceVectors[pkt.sourceid] = pkt.mincost
@@ -107,6 +114,7 @@ class RouterNode():
 
 
         self.myGUI.println("\nOur distance vector and routes:")
+
         # Printing first line of our distance vector and routes
         headerStr = "    dst |"
         for i in range(self.sim.NUM_NODES):
@@ -119,8 +127,13 @@ class RouterNode():
             self.myGUI.print("{:>6}".format(self.costs[i]))
 
         self.myGUI.println()
+        self.myGUI.print(" route  |")
 
-        
+        for i in range(self.sim.NUM_NODES):
+            self.myGUI.print("{:>6}".format(self.nextRouter[i]))
+        self.myGUI.println()
+
+
         # for neighbor in self.neighborsCosts:
         #     self.myGUI.print(" nbr  " + str(neighbor) + " |")
         #     for i in range(len(self.costs)):
@@ -145,14 +158,14 @@ class RouterNode():
     # --------------------------------------------------
 
     def calculate(self):
-        #temp_costs = []
         changed = False
         for n in range(self.sim.NUM_NODES):
-            mincost = self.costs[n]
+            mincost = self.costs[n] # 10
             for neighbor in self.neighborsCosts:
                 if self.neighborsCosts[neighbor] + self.distanceVectors[neighbor][n] < mincost:
                     changed = True
                     mincost = self.neighborsCosts[neighbor] + self.distanceVectors[neighbor][n]
+                    self.nextRouter[n] = neighbor
 
             if changed:
                 self.costs[n] = mincost
