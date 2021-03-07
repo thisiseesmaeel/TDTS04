@@ -9,24 +9,22 @@ class RouterNode():
     sim = None
     costs = None # We see this as distance vector for this router
 #---------------------------------------------------------------------
-## Rapport 
-## Kommentera koden 
-## gå igenom(förbreda)
+# * Rapport(pågång)
+# * Kommentera koden 
+# * Gå igenom(förbreda)
+# * FESTA
 #---------------------------------------------------------------------
     # --------------------------------------------------
-    def __init__(self, ID, sim, costs): # 
+    def __init__(self, ID, sim, costs):
         self.myID = ID
         self.sim = sim
         self.myGUI = GuiTextArea.GuiTextArea("  Output window for Router #" + str(ID) + "  ")
         self.myGUI.println("Running init for router {}".format(self.myID))
         self.costs = deepcopy(costs)
-        self.orgCosts = deepcopy(costs)
         self.neighborsCosts = {}
         self.distanceVectors = {self.myID: self.costs}
         self.nextRouter = {}
         self.routingTable = []
-
-        self.condition = False
         
         self.myGUI.println("Costs is: {}".format(self.costs))
 
@@ -46,17 +44,17 @@ class RouterNode():
                     self.distanceVectors[neighbor].append(0)
                 else:
                     self.distanceVectors[neighbor].append(self.sim.INFINITY)
-        for i in self.distanceVectors:
-            self.myGUI.println(str(self.distanceVectors[i]))
+                    
+        self.myGUI.println("Distance vectors in router {} is.".format(self.myID))
+        for i in sorted(self.distanceVectors):
+            self.myGUI.println( str(i) + " : " + str(self.distanceVectors[i]))
 
         for i in range(self.sim.NUM_NODES):
             if i in self.neighborsCosts and i != self.myID:
-                #print("{} Finns i {}.".format(i, self.neighborsCosts))
                 self.nextRouter[i] = i
             else:
                 self.nextRouter[i] = '-'
                 
-
         # Sending updates.
         for n in self.neighborsCosts:
             pkt = RouterPacket.RouterPacket(self.myID, n, deepcopy(self.costs))
@@ -71,12 +69,10 @@ class RouterNode():
 
     # --------------------------------------------------
     def sendUpdate(self, pkt):
-       # print("sendUpdate called from router {}!".format(self.myID))
         self.sim.toLayer2(pkt)
 
     # --------------------------------------------------
     def printDistanceTable(self):
-        #print("PrintTable called from router {}".format(self.myID))
         self.myGUI.println("Current table for " + str(self.myID) +
                            "  at time " + str(self.sim.getClocktime()))
         
@@ -95,7 +91,6 @@ class RouterNode():
             for i in self.distanceVectors[neighbor]:
                  self.myGUI.print("{:>6}".format(i))
             self.myGUI.println()
-
 
         self.myGUI.println("\nOur distance vector and routes:")
 
@@ -119,12 +114,9 @@ class RouterNode():
        
     # --------------------------------------------------
     def updateLinkCost(self, dest, newcost):
-
-        self.myGUI.println("updateLink called from router {}".format(self.myID))
-        self.myGUI.println("*" * 20)
+        self.myGUI.println("updateLink called from router {}\n{}".format(self.myID, "*" * 30))
         self.myGUI.println("Destination is {} and the new cost is {}".format(dest, newcost))
         self.neighborsCosts[dest] = newcost
-        #self.myGUI.println(str(self.costs))
 
         if self.sim.POISONREVERSE:
              for neighbor in self.neighborsCosts:
@@ -136,6 +128,8 @@ class RouterNode():
     # --------------------------------------------------
     # New version. Works with linkcost-change on
     def calculate(self):
+        self.myGUI.println("Calculating...")
+
         self.myGUI.println("Distance vectors in router {} is.".format(self.myID))
         for i in sorted(self.distanceVectors):
             self.myGUI.println( str(i) + " : " + str(self.distanceVectors[i]))
@@ -146,8 +140,6 @@ class RouterNode():
         for n in range(self.sim.NUM_NODES):
             if n == self.myID:
                 continue
-
-         
 
             mincost = self.sim.INFINITY
             for neighbor in self.neighborsCosts:
@@ -167,7 +159,3 @@ class RouterNode():
                 self.sendUpdate(pkt)
         else:
             self.myGUI.println("Distance vector DID NOT change for router {}.".format(self.myID))
-
-        
-if __name__ == "__main__":
-    pass
