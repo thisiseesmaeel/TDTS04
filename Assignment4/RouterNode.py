@@ -8,10 +8,11 @@ class RouterNode():
     myGUI = None
     sim = None
     costs = None # We see this as distance vector for this router
-
-    # Access simulator variables with:
-    # self.sim.POISONREVERSE, self.sim.NUM_NODES, etc.
-
+#---------------------------------------------------------------------
+## Rapport 
+## Kommentera koden 
+## gå igenom(förbreda)
+#---------------------------------------------------------------------
     # --------------------------------------------------
     def __init__(self, ID, sim, costs): # 
         self.myID = ID
@@ -20,7 +21,7 @@ class RouterNode():
         self.myGUI.println("Running init for router {}".format(self.myID))
         self.costs = deepcopy(costs)
         self.orgCosts = deepcopy(costs)
-        self.neighborsCosts = {} # EX: {1:4, 2:1} c(x,y)
+        self.neighborsCosts = {}
         self.distanceVectors = {self.myID: self.costs}
         self.nextRouter = {}
         self.routingTable = []
@@ -121,19 +122,14 @@ class RouterNode():
 
         self.myGUI.println("updateLink called from router {}".format(self.myID))
         self.myGUI.println("*" * 20)
-        self.myGUI.println("{} {}".format(dest, newcost))
-        self.myGUI.println(Fore.GREEN+ 'Here') 
+        self.myGUI.println("Destination is {} and the new cost is {}".format(dest, newcost))
         self.neighborsCosts[dest] = newcost
-        self.myGUI.println(str(self.costs))
+        #self.myGUI.println(str(self.costs))
 
         if self.sim.POISONREVERSE:
              for neighbor in self.neighborsCosts:
                  if neighbor != dest and self.sim.nodes[neighbor].nextRouter[dest] == self.myID:
                      self.distanceVectors[neighbor][dest] = self.sim.INFINITY
-
-
-        for i in self.distanceVectors:
-            self.myGUI.println(str(self.distanceVectors[i]))
 
         self.calculate()
         
@@ -144,7 +140,8 @@ class RouterNode():
         for i in sorted(self.distanceVectors):
             self.myGUI.println( str(i) + " : " + str(self.distanceVectors[i]))
 
-        self.myGUI.println("NeighborsCosts is: ".format(self.neighborsCosts))
+        self.myGUI.println("NeighborsCosts is: {}".format(str(self.neighborsCosts)))
+
         changed = False
         for n in range(self.sim.NUM_NODES):
             if n == self.myID:
