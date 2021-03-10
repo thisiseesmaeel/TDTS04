@@ -11,7 +11,6 @@ class RouterNode():
 #---------------------------------------------------------------------
 # * Rapport(pågång)
 # * Kommentera koden 
-# * Gå igenom(förbreda)
 # * FESTA
 #---------------------------------------------------------------------
     # --------------------------------------------------
@@ -24,7 +23,6 @@ class RouterNode():
         self.neighborsCosts = {}
         self.distanceVectors = {self.myID: self.costs}
         self.nextRouter = {}
-        self.routingTable = []
         
         self.myGUI.println("Costs is: {}".format(self.costs))
 
@@ -49,12 +47,13 @@ class RouterNode():
         for i in sorted(self.distanceVectors):
             self.myGUI.println( str(i) + " : " + str(self.distanceVectors[i]))
 
+        # Finds next router for every destination. If destination is not known yet it is '-' for now.
         for i in range(self.sim.NUM_NODES):
             if i in self.neighborsCosts and i != self.myID:
                 self.nextRouter[i] = i
             else:
                 self.nextRouter[i] = '-'
-                
+    
         # Sending updates.
         for n in self.neighborsCosts:
             pkt = RouterPacket.RouterPacket(self.myID, n, deepcopy(self.costs))
